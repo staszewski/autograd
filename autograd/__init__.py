@@ -6,6 +6,9 @@ This engine demonstrates the core concepts behind modern deep learning framework
 """
 
 from .tensor import Tensor
+from .context import Context
+from .operation import Operation
+from .arithmetic import AddOperation, SubOperation
 
 __version__ = "0.1.0"
-__all__ = ["Tensor"]
+__all__ = ["Tensor", "Context", "Operation", "AddOperation", "SubOperation"]
