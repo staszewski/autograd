@@ -1,0 +1,180 @@
+To implement a simple automatic differentiation (autograd) system, we'll create a computational graph where operations are tracked, and gradients are computed via backpropagation. Here's a step-by-step implementation:
+
+### Step 1: Define the Context Class
+The `Context` class saves tensors needed for the backward pass.
+
+```python
+class Context:
+    def __init__(self):
+        self.saved_tensors = []
+    
+    def save_for_backward(self, *tensors):
+        self.saved_tensors = tensors
+```
+
+### Step 2: Define the Function Base Class
+The `Function` class defines the forward and backward operations. Subclasses implement specific operations.
+
+```python
+class Function:
+    @classmethod
+    def forward(cls, ctx, *args):
+        raise NotImplementedError
+    
+    @classmethod
+    def backward(cls, ctx, grad_output):
+        raise NotImplementedError
+    
+    @classmethod
+    def apply(cls, *args):
+        ctx = Context()
+        output = cls.forward(ctx, *args)
+        requires_grad = any(arg.requires_grad for arg in args)
+        return Tensor(output, requires_grad=requires_grad, is_leaf=False, grad_fn=(cls, ctx))
+```
+
+### Step 3: Define the Tensor Class
+The `Tensor` class holds data, gradients, and computational graph information.
+
+```python
+class Tensor:
+    def __init__(self, data, requires_grad=False, is_leaf=True, grad_fn=None):
+        self.data = data
+        self.grad = 0.0
+        self.requires_grad = requires_grad
+        self.is_leaf = is_leaf
+        self.grad_fn = grad_fn  # Tuple (function_class, context)
+    
+    def backward(self):
+        if not self.requires_grad:
+            return
+        
+        # Initialize gradient for the root tensor
+        self.grad = 1.0
+        
+        # Build in_degree count for topological sort
+        in_degree = {}
+        visited = set([self])
+        queue = [self]
+        
+        while queue:
+            tensor = queue.pop()
+            if tensor.grad_fn is not None:
+                fn, ctx = tensor.grad_fn
+                for input_tensor in ctx.saved_tensors:
+                    if input_tensor.requires_grad:
+                        in_degree[input_tensor] = in_degree.get(input_tensor, 0) + 1
+                        if input_tensor not in visited:
+                            visited.add(input_tensor)
+                            queue.append(input_tensor)
+        
+        # Topological sort using Kahn's algorithm
+        queue = [self]
+        topo_order = []
+        while queue:
+            tensor = queue.pop()
+            topo_order.append(tensor)
+            if tensor.grad_fn is not None:
+                fn, ctx = tensor.grad_fn
+                for input_tensor in ctx.saved_tensors:
+                    if input_tensor.requires_grad:
+                        in_degree[input_tensor] -= 1
+                        if in_degree[input_tensor] == 0:
+                            queue.append(input_tensor)
+        
+        # Backpropagation in topological order
+        for tensor in topo_order:
+            if tensor.grad_fn is not None:
+                fn, ctx = tensor.grad_fn
+                grads = fn.backward(ctx, tensor.grad)
+                for i, grad in enumerate(grads):
+                    input_tensor = ctx.saved_tensors[i]
+                    if input_tensor.requires_grad:
+                        input_tensor.grad += grad
+    
+    # Overload operations
+    def __add__(self, other):
+        return Add.apply(self, other)
+    
+    def __mul__(self, other):
+        return Mul.apply(self, other)
+    
+    def __pow__(self, power):
+        return Pow.apply(self, power)
+    
+    def __repr__(self):
+        return f"Tensor(data={self.data}, grad={self.grad})"
+```
+
+### Step 4: Implement Operations
+Define specific operations like addition, multiplication, and power.
+
+```python
+class Add(Function):
+    @classmethod
+    def forward(cls, ctx, a, b):
+        ctx.save_for_backward(a, b)
+        return a.data + b.data
+    
+    @classmethod
+    def backward(cls, ctx, grad_output):
+        a, b = ctx.saved_tensors
+        return grad_output, grad_output
+
+class Mul(Function):
+    @classmethod
+    def forward(cls, ctx, a, b):
+        ctx.save_for_backward(a, b)
+        return a.data * b.data
+    
+    @classmethod
+    def backward(cls, ctx, grad_output):
+        a, b = ctx.saved_tensors
+        return grad_output * b.data, grad_output * a.data
+
+class Pow(Function):
+    @classmethod
+    def forward(cls, ctx, a, power):
+        ctx.save_for_backward(a, power)
+        return a.data ** power
+    
+    @classmethod
+    def backward(cls, ctx, grad_output):
+        a, power = ctx.saved_tensors
+        return grad_output * power * (a.data ** (power - 1))
+```
+
+### Step 5: Example Usage
+Demonstrate the autograd system with a simple computation.
+
+```python
+# Create tensors
+x = Tensor(2.0, requires_grad=True)
+y = Tensor(3.0, requires_grad=True)
+
+# Computation: z = x * y + x^2
+z = x * y + x ** 2
+
+# Backpropagation
+z.backward()
+
+# Print gradients
+print(x.grad)  # 7.0 (y + 2*x = 3 + 4 = 7)
+print(y.grad)  # 2.0 (x = 2)
+```
+
+### Explanation:
+1. **Context**: Saves input tensors for gradient computation during the backward pass.
+2. **Function**: Base class for operations. Subclasses implement `forward` and `backward`.
+3. **Tensor**: 
+   - Holds data and gradients.
+   - Tracks operations via `grad_fn`.
+   - `backward` computes gradients using topological sort and backpropagation.
+4. **Operations**: 
+   - `Add`, `Mul`, and `Pow` define forward and backward passes.
+   - `backward` returns gradients for each input.
+5. **Backpropagation**:
+   - **Topological Sort**: Orders tensors to ensure dependencies are resolved.
+   - **Gradient Accumulation**: Computes gradients for each tensor in reverse order.
+
+This implementation supports basic operations and automatic differentiation, forming the foundation of frameworks like PyTorch. For more complex scenarios (e.g., neural networks), extend with additional operations and optimizations.
