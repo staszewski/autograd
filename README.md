@@ -1,72 +1,76 @@
-## What is a Gradient?
-A gradient tells you how much the output changes when you change an input by a tiny amount.
-If you have output = f(input), then:
-gradient = ∂output/∂input
+# Autograd
 
-### Simple Examples
+A minimal implementation of automatic differentiation from scratch. Learn how modern deep learning frameworks compute gradients automatically.
 
-**Example 1: Linear function**
+## 🚀 Features
+
+- **Addition**: `a + b`
+- **Subtraction**: `a - b` 
+- **Multiplication**: `a * b`
+- **Automatic Gradients**: Computes derivatives via backpropagation
+- **Scalar & Tensor Operations**: Works with both `tensor + scalar` and `scalar + tensor`
+
+## 📖 Quick Start
+
 ```python
-y = x
-# If you increase x by 1, y increases by 1
-# So ∂y/∂x = 1
+from autograd import Tensor
+
+# Create tensors with gradient tracking
+x = Tensor(2.0, requires_grad=True)
+y = Tensor(3.0, requires_grad=True)
+
+# Build expression: z = x * y + x
+temp = x * y  # 6.0
+z = temp + x  # 8.0
+
+# Compute gradients automatically
+z.backward()
+
+print(f"∂z/∂x = {x._grad}")  # 4.0 (y + 1)
+print(f"∂z/∂y = {y._grad}")  # 2.0 (x)
 ```
 
-**Example 2: Scaled function**
-```python
-y = 2x
-# If you increase x by 1, y increases by 2
-# So ∂y/∂x = 2
+## 🧮 Math Behind the Magic
+
+### Basic Derivatives
 ```
-
-**Example 3: Negative function**
-```python
-y = -x
-# If you increase x by 1, y decreases by 1
-# So ∂y/∂x = -1
-```
-
-### Multiple Variables
-
-**Example: Addition**
-```python
-z = x + y
-# ∂z/∂x = 1 (increasing x by 1 increases z by 1)
-# ∂z/∂y = 1 (increasing y by 1 increases z by 1)
-```
-
-**Example: Subtraction**
-```python
-z = x - y
-# ∂z/∂x = 1 (increasing x by 1 increases z by 1)
-# ∂z/∂y = -1 (increasing y by 1 decreases z by 1)
+∂(a + b)/∂a = 1,  ∂(a + b)/∂b = 1
+∂(a - b)/∂a = 1,  ∂(a - b)/∂b = -1  
+∂(a * b)/∂a = b,  ∂(a * b)/∂b = a
 ```
 
 ### Chain Rule
-
-When you have nested functions: `z = f(g(x))`
-
-```python
-z = f(g(x))
+For nested functions `z = f(g(x))`:
+```
 ∂z/∂x = ∂z/∂g × ∂g/∂x
 ```
 
-**Example:**
+### Gradient Accumulation
+When a variable appears multiple times, gradients add:
 ```python
-# Given: z = y + 1, y = 2x
-# Find ∂z/∂x:
-# ∂z/∂x = ∂z/∂y × ∂y/∂x = 1 × 2 = 2
+# z = x * y + x * 2
+# ∂z/∂x = y + 2  (sum of all paths)
 ```
 
-### Multiple Paths
+## 🧪 Testing
 
-When a variable affects the output through multiple paths, add all contributions:
+```bash
+# Run all tests
+uv run pytest
 
-**Example:**
-```python
-# Given: z = x - y, y = x
-# ∂z/∂x has two contributions:
-# Direct: ∂z/∂x = 1 (from z = x - y, coefficient of x is +1)
-# Through y: ∂z/∂y × ∂y/∂x = (-1) × 1 = -1
-# Total: ∂z/∂x = 1 + (-1) = 0
+# Run specific tests
+uv run pytest tests/test_mul.py -v
+```
+
+## 🏗️ Architecture
+
+```
+autograd/
+├── tensor.py      # Tensor class with gradient tracking
+├── context.py     # Saves data for backward pass  
+├── operation.py   # Abstract operation base class
+└── arithmetic.py  # Add, Sub, Mul implementations
+```
+
+Built with clean OOP principles for educational purposes.
 ```

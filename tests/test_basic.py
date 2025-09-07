@@ -30,8 +30,12 @@ def test_addition_multiple_times():
     f = b + c + d + e
     f.backward()
 
-    print('a._grad', a._grad)
     assert a._grad == 4.0
+    assert b._grad == 1.0
+    assert c._grad == 1.0
+    assert d._grad == 1.0
+    assert e._grad == 1.0
+    assert f._grad == 1.0
 
 def test_subtraction():
     a = Tensor(5.0, requires_grad=True)
@@ -43,6 +47,7 @@ def test_subtraction():
 
     assert a._grad == 1.0
     assert b._grad == 1.0
+    assert c._grad == 1.0
 
 def test_subtration_simple():
     x = Tensor(5.0, requires_grad=True)
@@ -54,6 +59,7 @@ def test_subtration_simple():
 
     assert x._grad == 1.0
     assert y._grad == -1.0
+    assert z._grad == 1.0
 
 def test_subtraction_multiple_times():
     a = Tensor(5.0, requires_grad=True)
@@ -67,13 +73,8 @@ def test_subtraction_multiple_times():
     f.backward()
 
     assert a._grad == 4.0
-
-if __name__ == "__main__":
-    test_basic_creation()
-    test_addition()
-    test_addition_multiple_times()
-    test_subtraction_multiple_times()
-    test_subtraction()
-    test_subtration_simple()
-    print("All tests passed!")
-    
+    assert b._grad == 1.0
+    assert c._grad == 1.0
+    assert d._grad == 1.0
+    assert e._grad == 1.0
+    assert f._grad == 1.0
