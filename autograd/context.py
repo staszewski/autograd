@@ -1,7 +1,5 @@
 from typing import List, Any
 
-
-
 class Context:
     """Context manager for saving tensors and values needed during backward pass."""
     

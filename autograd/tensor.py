@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional, Set, Tuple, List, Any
+from typing import Optional, Set, Tuple
 
 from autograd.arithmetic import AddOperation, MulOperation, SubOperation
 from autograd.context import Context

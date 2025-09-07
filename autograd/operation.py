@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from autograd.tensor import Tensor
+
 class Operation(ABC):
     """Base class for all operations."""
     
