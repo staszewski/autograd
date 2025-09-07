@@ -31,3 +31,17 @@ class SubOperation(Operation):
     @classmethod
     def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
         return [grad_output, -grad_output]
+
+class MulOperation(Operation):
+    """Multiplication operation."""
+    
+    @classmethod
+    def forward(cls, ctx: Context, a: 'Tensor', b: 'Tensor') -> np.ndarray:
+        ctx.save_for_backward(a, b)
+        return a.data * b.data
+    
+    @classmethod
+    def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
+        a, b = ctx.saved_tensors
+
+        return [grad_output * b.data, grad_output * a.data]

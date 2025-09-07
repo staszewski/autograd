@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+This test file is very much LLM generated causse I'm afraid that I'm missing something.
+"""
+
 from autograd import Tensor
+
 
 def test_complex_graph_gradients():
     """Test gradient computation in complex computation graphs"""
@@ -84,14 +89,3 @@ def test_original_failing_case():
     # This should be 4.0 because a appears 4 times in the computation
     assert a._grad == 4.0
 
-if __name__ == "__main__":
-    print("🐛 Bug Detection Tests (with assert)")
-    print("=" * 40)
-
-    test_complex_graph_gradients() 
-    test_scalar_operations()  
-    test_gradient_accumulation()
-    test_memory_management()
-    test_original_failing_case()  
-    
-    print("All tests passed!")

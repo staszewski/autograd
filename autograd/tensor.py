@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Set, Tuple, List, Any
 
-from autograd.arithmetic import AddOperation, SubOperation
+from autograd.arithmetic import AddOperation, MulOperation, SubOperation
 from autograd.context import Context
 
 class Tensor:
@@ -67,6 +67,12 @@ class Tensor:
 
     def __rsub__(self, other):
         return SubOperation.apply(_ensure_tensor(other), self)
+
+    def __mul__(self, other):
+        return MulOperation.apply(self, _ensure_tensor(other))
+
+    def __rmul__(self, other):
+        return MulOperation.apply(_ensure_tensor(other), self)
 
 def _ensure_tensor(value):
     """Ensure value is a Tensor."""
