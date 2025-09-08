@@ -1,6 +1,7 @@
 from autograd.context import Context
 from autograd.operation import Operation
 
+import math
 import numpy as np
 from typing import List, TYPE_CHECKING
 
@@ -60,9 +61,15 @@ class PowOperation(Operation):
 
         # d/da(a^n) = n * a^(n-1) -> Power Rule
         grad_a = grad_output * n.data * (a.data ** (n.data - 1))
-        
+
+        eps = 1e-8  # Small positive number
+
+        if a.data <= 0:
+            log_a = math.log(eps)
+        else:
+            log_a = math.log(a.data)
+
         # d/dn(a^n) = a^n * ln(a) -> Exponential Rule
-        import math
-        grad_n = grad_output * (a.data ** n.data) * math.log(a.data)
+        grad_n = grad_output * (a.data ** n.data) * log_a 
 
         return [grad_a, grad_n]

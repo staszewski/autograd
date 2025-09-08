@@ -36,3 +36,36 @@ def test_pow_cube():
     
     # ∂/∂a(a^2) = 3a^2 = 3 × 3^2 = 27.0
     assert a._grad == 27.0
+
+def test_pow_exponent_zero():
+    a = Tensor(3.0, requires_grad=True)
+    
+    c = a ** 0
+    assert c.data == 1.0
+    
+    c.backward()
+
+    # ∂/∂a(a^0) = 0
+    assert a._grad == 0.0
+
+def test_pow_base_one():
+    a = Tensor(3.0, requires_grad=True)
+    
+    c = 1 ** a
+    assert c.data == 1.0
+    
+    c.backward()
+    
+    # ∂/∂a(1^a) = 0
+    assert a._grad == 0.0
+
+def test_pow_zero_base():
+    a = Tensor(3.0, requires_grad=True)
+    
+    c = 0 ** a
+    assert c.data == 0.0
+    
+    c.backward()
+    
+    # ∂/∂a(0^a) = 0
+    assert a._grad == 0.0
