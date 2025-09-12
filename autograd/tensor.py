@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Set, Tuple
 
-from autograd.arithmetic import AddOperation, MulOperation, SubOperation
+from autograd.arithmetic import AddOperation, MulOperation, PowOperation, SubOperation
 from autograd.context import Context
 
 class Tensor:
@@ -50,9 +50,6 @@ class Tensor:
                     if input_tensor._requires_grad:
                         input_tensor.backward(grad_input)
 
-        if is_root_call:
-            delattr(Tensor, '_backward_visited')
-            
         if not self._requires_grad:
             raise RuntimeError("Gradient computation is not allowed for this tensor.")
 
@@ -73,6 +70,12 @@ class Tensor:
 
     def __rmul__(self, other):
         return MulOperation.apply(_ensure_tensor(other), self)
+
+    def __pow__(self, other):
+        return PowOperation.apply(self, _ensure_tensor(other))
+
+    def __rpow__(self, other):
+        return PowOperation.apply(_ensure_tensor(other), self)
 
 def _ensure_tensor(value):
     """Ensure value is a Tensor."""

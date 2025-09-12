@@ -6,6 +6,7 @@ Learning repo for creating auto grad. Work in progress.
 - Addition
 - Subtraction
 - Multiplication
+- Pow
 
 ##  Math
 
