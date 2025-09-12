@@ -73,3 +73,19 @@ class PowOperation(Operation):
         grad_n = grad_output * (a.data ** n.data) * log_a 
 
         return [grad_a, grad_n]
+
+
+class DivOperation(Operation):
+    """Division operation."""
+    
+    @classmethod
+    def forward(cls, ctx: Context, a: 'Tensor', b: 'Tensor') -> np.ndarray:
+        ctx.save_for_backward(a, b)
+        return a.data / b.data
+    
+    @classmethod
+    def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
+        a, b = ctx.saved_tensors
+
+        # quotient rule h'(x) = [f'(x) × g(x) - f(x) × g'(x)] / [g(x)]²
+        return [grad_output / b.data, -grad_output * a.data / (b.data ** 2)]
