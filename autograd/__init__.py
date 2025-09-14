@@ -8,6 +8,7 @@ from .tensor import Tensor
 from .context import Context
 from .operation import Operation
 from .arithmetic import AddOperation, SubOperation, MulOperation, PowOperation, DivOperation, ReLUOperation, MatMulOperation
+from .mlp import MLP
 
 __version__ = "0.1.0"
-__all__ = ["Tensor", "Context", "Operation", "AddOperation", "SubOperation", "MulOperation", "PowOperation", "DivOperation", "ReLUOperation", "MatMulOperation"]
+__all__ = ["Tensor", "Context", "Operation", "AddOperation", "SubOperation", "MulOperation", "PowOperation", "DivOperation", "ReLUOperation", "MatMulOperation", "MLP"]
