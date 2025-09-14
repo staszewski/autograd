@@ -56,6 +56,12 @@ class Tensor:
     def relu(self):
         return ReLUOperation.apply(self)
 
+    def __neg__(self):
+        return self * -1
+
+    def __pos__(self):
+        return self
+
     def __add__(self, other):
         return AddOperation.apply(self, _ensure_tensor(other))
 
