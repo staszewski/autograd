@@ -17,6 +17,9 @@ class Tensor:
     def __repr__(self):
         return f"Tensor({self._data}, requires_grad={self._requires_grad})"
 
+    def zero_grad(self):
+        self._grad = np.zeros_like(self._data)
+
     @property
     def data(self):
         return self._data

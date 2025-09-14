@@ -19,7 +19,20 @@ class AddOperation(Operation):
     
     @classmethod
     def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
-        return [grad_output, grad_output]
+        a, b = ctx.saved_tensors
+
+        def unbroadcast(grad, shape):
+            ndims_added = grad.ndim - len(shape)
+            if ndims_added > 0:
+                grad = grad.sum(axis=tuple(range(ndims_added)))
+        
+            for axis, size in enumerate(shape):
+                if size == 1 and grad.shape[axis] > 1:
+                    grad = grad.sum(axis=axis, keepdims=True)
+        
+            return grad
+        return [unbroadcast(grad_output, a.data.shape),
+            unbroadcast(grad_output, b.data.shape)]
 
 class SubOperation(Operation):
     """Subtraction operation."""
