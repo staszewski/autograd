@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Set, Tuple
 
-from autograd.arithmetic import AddOperation, MulOperation, PowOperation, SubOperation, DivOperation
+from autograd.arithmetic import AddOperation, MulOperation, PowOperation, ReLUOperation, SubOperation, DivOperation
 from autograd.context import Context
 
 class Tensor:
@@ -52,6 +52,9 @@ class Tensor:
 
         if not self._requires_grad:
             raise RuntimeError("Gradient computation is not allowed for this tensor.")
+
+    def relu(self):
+        return ReLUOperation.apply(self)
 
     def __add__(self, other):
         return AddOperation.apply(self, _ensure_tensor(other))

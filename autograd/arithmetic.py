@@ -89,3 +89,22 @@ class DivOperation(Operation):
 
         # quotient rule h'(x) = [f'(x) × g(x) - f(x) × g'(x)] / [g(x)]²
         return [grad_output / b.data, -grad_output * a.data / (b.data ** 2)]
+
+class ReLUOperation(Operation):
+    """ReLU activation function operation."""
+    
+    @classmethod
+    def forward(cls, ctx: Context, a: 'Tensor') -> np.ndarray:
+        ctx.save_for_backward(a)
+
+        """
+        ReLU forward: 0 if x < 0, x if x >= 0
+        """
+        return np.maximum(0, a.data)
+    
+    @classmethod
+    def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
+        a, = ctx.saved_tensors
+        # ReLU derivative: 1 if x > 0, else 0
+        grad_a = grad_output * (a.data > 0)
+        return [grad_a]
