@@ -47,6 +47,20 @@ class MulOperation(Operation):
 
         return [grad_output * b.data, grad_output * a.data]
 
+class MatMulOperation(Operation):
+    """Matrix multiplication operation."""
+    
+    @classmethod
+    def forward(cls, ctx: Context, a: 'Tensor', b: 'Tensor') -> np.ndarray:
+        ctx.save_for_backward(a, b)
+        return a.data @ b.data
+    
+    @classmethod
+    def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
+        a, b = ctx.saved_tensors
+
+        return [grad_output @ b.data.T, a.data.T @ grad_output]
+
 class PowOperation(Operation):
     """Power operation."""
     
@@ -105,6 +119,9 @@ class ReLUOperation(Operation):
     @classmethod
     def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
         a, = ctx.saved_tensors
-        # ReLU derivative: 1 if x > 0, else 0
+
+        """
+        ReLU derivative: 1 if x > 0, else 0
+        """
         grad_a = grad_output * (a.data > 0)
         return [grad_a]
