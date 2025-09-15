@@ -138,3 +138,20 @@ class ReLUOperation(Operation):
         """
         grad_a = grad_output * (a.data > 0)
         return [grad_a]
+
+class SigmoidOperation(Operation):
+    """Sigmoid activation function operation."""
+    
+    @classmethod
+    def forward(cls, ctx: Context, a: 'Tensor') -> np.ndarray:
+        sigmoid_output = 1 / (1 + np.exp(-a.data))
+        ctx.save_for_backward(a)
+        ctx.save_for_backward_values(sigmoid_output)
+        return sigmoid_output
+    
+    @classmethod
+    def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
+        sigmoid_output, = ctx.saved_values
+
+        grad_a = grad_output * sigmoid_output * (1 - sigmoid_output) 
+        return [grad_a]
