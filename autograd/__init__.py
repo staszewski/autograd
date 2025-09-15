@@ -7,7 +7,9 @@ A simple implementation of automatic differentiation for learning purposes.
 from .tensor import Tensor
 from .context import Context
 from .operation import Operation
-from .arithmetic import AddOperation, SubOperation, MulOperation, PowOperation, DivOperation
+from .arithmetic import AddOperation, SubOperation, MulOperation, PowOperation, DivOperation, ReLUOperation, MatMulOperation
+from .mlp import MLP
+from .loss import MSELoss
 
 __version__ = "0.1.0"
-__all__ = ["Tensor", "Context", "Operation", "AddOperation", "SubOperation", "MulOperation", "PowOperation", "DivOperation"]
+__all__ = ["Tensor", "Context", "Operation", "AddOperation", "SubOperation", "MulOperation", "PowOperation", "DivOperation", "ReLUOperation", "MatMulOperation", "MLP", "MSELoss"]

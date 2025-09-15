@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Set, Tuple
 
-from autograd.arithmetic import AddOperation, MulOperation, PowOperation, SubOperation, DivOperation
+from autograd.arithmetic import AddOperation, MatMulOperation, MulOperation, PowOperation, ReLUOperation, SubOperation, DivOperation
 from autograd.context import Context
 
 class Tensor:
@@ -16,6 +16,9 @@ class Tensor:
 
     def __repr__(self):
         return f"Tensor({self._data}, requires_grad={self._requires_grad})"
+
+    def zero_grad(self):
+        self._grad = np.zeros_like(self._data)
 
     @property
     def data(self):
@@ -53,6 +56,15 @@ class Tensor:
         if not self._requires_grad:
             raise RuntimeError("Gradient computation is not allowed for this tensor.")
 
+    def relu(self):
+        return ReLUOperation.apply(self)
+
+    def __neg__(self):
+        return self * -1
+
+    def __pos__(self):
+        return self
+
     def __add__(self, other):
         return AddOperation.apply(self, _ensure_tensor(other))
 
@@ -70,6 +82,9 @@ class Tensor:
 
     def __rmul__(self, other):
         return MulOperation.apply(_ensure_tensor(other), self)
+
+    def __matmul__(self, other):
+        return MatMulOperation.apply(self, _ensure_tensor(other))
 
     def __truediv__(self, other):
         return DivOperation.apply(self, _ensure_tensor(other))
