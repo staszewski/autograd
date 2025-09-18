@@ -155,3 +155,21 @@ class SigmoidOperation(Operation):
 
         grad_a = grad_output * sigmoid_output * (1 - sigmoid_output) 
         return [grad_a]
+
+class TanhOperation(Operation):
+    """Tanh activation function operation."""
+    
+    @classmethod
+    def forward(cls, ctx: Context, a: 'Tensor') -> np.ndarray:
+        tanh_output = np.tanh(a.data)
+        ctx.save_for_backward(a)
+        ctx.save_for_backward_values(tanh_output)
+        return tanh_output
+    
+    @classmethod
+    def backward(cls, ctx: Context, grad_output: np.ndarray) -> List[np.ndarray]:
+        tanh_output, = ctx.saved_values
+
+        # tanh'(x) = 1 - tanh²(x)
+        grad_a = grad_output * (1 - tanh_output ** 2)
+        return [grad_a]
