@@ -1,12 +1,14 @@
 import numpy as np
 from typing import Optional, Set, Tuple
 
-from autograd.arithmetic import AddOperation, MatMulOperation, MulOperation, PowOperation, ReLUOperation, SubOperation, DivOperation
+from autograd.arithmetic import AddOperation, MatMulOperation, MulOperation, PowOperation, ReLUOperation, SigmoidOperation, SubOperation, DivOperation
 from autograd.context import Context
 
 class Tensor:
     def __init__(self, data, requires_grad=False):
         self._data = np.array(data)
+        if requires_grad and not np.issubdtype(self._data.dtype, np.floating):
+            self._data = self._data.astype(np.float32)
         self._requires_grad = requires_grad
         self._grad = np.zeros_like(self._data)
         self._prev: Set[Tensor] = set()
@@ -58,6 +60,9 @@ class Tensor:
 
     def relu(self):
         return ReLUOperation.apply(self)
+
+    def sigmoid(self):
+        return SigmoidOperation.apply(self)
 
     def __neg__(self):
         return self * -1
