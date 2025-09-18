@@ -9,6 +9,7 @@ description = "Educational autograd engine implementation"
 authors = [{name = "Your Name"}]
 requires-python = ">=3.11"
 dependencies = [
+    "matplotlib>=3.10.6",
     "numpy>=1.20.0",
 ]
 

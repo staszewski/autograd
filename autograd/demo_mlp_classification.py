@@ -1,6 +1,7 @@
 from autograd import Tensor
 from autograd.loss import CrossEntropyLoss, MSELoss
 import numpy as np
+import matplotlib.pyplot as plt
 
 class LinearClassifier:
     def __init__(self, input_size):
@@ -12,6 +13,36 @@ class LinearClassifier:
 
     def parameters(self):
         return [self.W, self.b]
+
+def plot_decision_boundary(classifier, X, y, title):
+    x_min, x_max = X.data[0].min() - 1, X.data[0].max() + 1
+    y_min, y_max = X.data[1].min() - 1, X.data[1].max() + 1
+    
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100),
+                         np.linspace(y_min, y_max, 100))
+    
+    grid_points = np.c_[xx.ravel(), yy.ravel()].T  
+    grid_tensor = Tensor(grid_points, requires_grad=False)
+    predictions = classifier(grid_tensor)
+    
+    Z = predictions.data.reshape(xx.shape)
+    
+    plt.figure(figsize=(8, 6))
+    plt.contourf(xx, yy, Z, levels=50, alpha=0.6, cmap='RdBu')
+    plt.contour(xx, yy, Z, levels=[0.5], colors='black', linewidths=2)
+    
+    class_0_mask = y.data[0] == 0
+    class_1_mask = y.data[0] == 1
+    plt.scatter(X.data[0][class_0_mask], X.data[1][class_0_mask], 
+                c='red', marker='o', s=100, edgecolors='black', label='Class 0')
+    plt.scatter(X.data[0][class_1_mask], X.data[1][class_1_mask], 
+                c='blue', marker='s', s=100, edgecolors='black', label='Class 1')
+    
+    plt.title(title)
+    plt.xlabel('X1')
+    plt.ylabel('X2')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
 
 def generate_2d_clusters():
     cluster1_x = np.random.normal(2, 0.5, 10)
@@ -68,6 +99,9 @@ def compare_losses():
     print("--------------------------------")
     print(f"Cross-Entropy final accuracy: {ce_accuracy:.4f}")
     print(f"MSE final accuracy: {mse_accuracy:.4f}")
+    plot_decision_boundary(ce_classifier, X, y, "Cross-Entropy Decision Boundary")
+    plot_decision_boundary(mse_classifier, X, y, "MSE Decision Boundary")
+    plt.show()
 
 if __name__ == "__main__":
     compare_losses()
