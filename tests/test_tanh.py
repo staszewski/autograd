@@ -18,3 +18,14 @@ def test_tanh_backward():
     # tanh'(x) = 1 - tanh²(x)
     expected_grad = [1, 0.42, 0.42]
     assert np.allclose(x._grad, expected_grad, atol=1e-4)
+
+def test_tanh_chain_rule():
+    x = Tensor([1], requires_grad=True)
+    y = x.tanh()
+    z = y * 3 
+
+    z.backward()
+
+    # dz/dx = 3 * (1 - tanh²(1))
+    expected_grad = 3 * (1 - np.tanh(1) ** 2)
+    assert np.allclose(x._grad, [expected_grad], atol=1e-4)
