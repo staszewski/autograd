@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Set, Tuple
 
-from autograd.arithmetic import AddOperation, MatMulOperation, MulOperation, PowOperation, ReLUOperation, SigmoidOperation, SubOperation, DivOperation
+from autograd.arithmetic import AddOperation, MatMulOperation, MulOperation, PowOperation, ReLUOperation, SigmoidOperation, SubOperation, DivOperation, TanhOperation
 from autograd.context import Context
 
 class Tensor:
@@ -63,6 +63,9 @@ class Tensor:
 
     def sigmoid(self):
         return SigmoidOperation.apply(self)
+
+    def tanh(self):
+        return TanhOperation.apply(self)
 
     def __neg__(self):
         return self * -1
