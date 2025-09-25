@@ -7,7 +7,7 @@ import numpy as np
 class SimpleTargetDetector:
     def __init__(self) -> None:
         self.conv_kernel = Tensor([[1, -1], [-1, 1]], requires_grad=True)
-        self.mlp = MLP(input_size=16, hidden_size=5, output_size=1)
+        self.mlp = MLP(input_size=16, hidden_size=5, output_size=1, activation="tanh")
         pass
 
     def forward(self, image):
