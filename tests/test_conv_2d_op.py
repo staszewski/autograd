@@ -1,5 +1,5 @@
+from autograd.operations.conv_2d_operation import Conv2DOperation
 from autograd.tensor import Tensor
-from autograd.conv_2d_operation import Conv2DOperation
 import numpy as np
 
 def test_conv_2d_forward():
