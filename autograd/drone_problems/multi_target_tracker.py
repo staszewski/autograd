@@ -10,16 +10,32 @@ class MultiTargetDetector:
         self.single_detector = SimpleTargetDetector()
 
     def extract_patch(self, image, start_i, start_j, patch_size=PATCH_SIZE):
-        patch_data = image.data[start_i:start_i+patch_size, start_j:start_j+patch_size]
+        image_height, image_width = image.data.shape
+    
+        end_i = start_i + patch_size
+        end_j = start_j + patch_size
+    
+        # If patch goes beyond image, pad with zeros
+        if end_i > image_height or end_j > image_width:
+            patch_data = np.zeros((patch_size, patch_size), dtype=np.float32)
+        
+            valid_end_i = min(end_i, image_height)
+            valid_end_j = min(end_j, image_width)
+        
+            valid_height = valid_end_i - start_i
+            valid_width = valid_end_j - start_j
+            patch_data[:valid_height, :valid_width] = image.data[start_i:valid_end_i, start_j:valid_end_j]
+        else:
+            patch_data = image.data[start_i:start_i+patch_size, start_j:start_j+patch_size]
+    
         return Tensor(patch_data)
 
-    def detect_all_targets(self, image, patch_size=PATCH_SIZE, threshold=THRESHOLD):
+    def detect_all_targets(self, image, threshold=THRESHOLD):
         detected_positions = []
         image_size = image._data.shape[0]
-        max_position = image_size - patch_size + 1
 
-        for i in range(max_position):
-            for j in range(max_position):
+        for i in range(image_size):
+            for j in range(image_size):
                 patch = self.extract_patch(image, i, j)
                 detected_position = self.single_detector.forward(patch)
 
@@ -95,7 +111,7 @@ class MultiTargetDetector:
 def demo_multi_target_detection():
     detector = MultiTargetDetector()
     
-    print("Training multi-target detector...")
+    print("Training...")
     detector.train(epochs=100, learning_rate=0.01)
     
     print("\nTesting trained detector:")
@@ -108,6 +124,46 @@ def demo_multi_target_detection():
     test_tensor = Tensor(test_image)
     detected_positions = detector.detect_all_targets(test_tensor)
     print(f"Detected targets at positions: {detected_positions}")
+
+    true_targets = [(2, 3), (6, 7)]
+
+    print("True target positions:")
+    for i, pos in enumerate(true_targets):
+        print(f"  Target {i+1}: {pos}")
+
+    for i, true_pos in enumerate(true_targets):
+        print(f"\nTarget {i+1} at {true_pos}:")
+        close_detections = []
+        for det_pos in detected_positions:
+            distance = abs(true_pos[0] - det_pos[0]) + abs(true_pos[1] - det_pos[1])
+            if distance <= 2:
+                close_detections.append((det_pos, distance))
+    
+        if close_detections:
+            print(f"Found nearby: {close_detections}")
+        else:
+            print(f"MISSED - no detections within 2 pixels")
+
+    # target 1 at (2, 3)
+    patch_at_target1 = detector.extract_patch(test_tensor, 2, 3)
+    prediction1 = detector.single_detector.forward(patch_at_target1)
+    print(f"Prediction at target 1 location (2,3): {prediction1.data[0][0]:.4f}")
+    
+    # target 2 at (6, 7)
+    patch_at_target2 = detector.extract_patch(test_tensor, 6, 7)
+    prediction2 = detector.single_detector.forward(patch_at_target2)
+    print(f"Prediction at target 2 location (6,7): {prediction2.data[0][0]:.4f}")
+    
+    print(f"Current threshold: {detector.THRESHOLD}")
+
+    print("\nHigh-confidence patches (>0.6):")
+    image_size = test_tensor._data.shape[0]
+    for i in range(image_size):
+        for j in range(image_size):
+            patch = detector.extract_patch(test_tensor, i, j)
+            prediction = detector.single_detector.forward(patch)
+            if prediction.data[0][0] > 0.6:
+                print(f"Position ({i},{j}): {prediction.data[0][0]:.4f}")
 
 if __name__ == "__main__":
     demo_multi_target_detection()
