@@ -1,8 +1,8 @@
 from autograd.loss import MSELoss
 from autograd.mlp import MLP
 from autograd.tensor import Tensor
-from autograd.conv_2d_operation import Conv2DOperation, FlattenOperation
 import numpy as np
+from autograd.operations.conv_2d_operation import Conv2DOperation, FlattenOperation
 
 class SimpleTargetDetector:
     def __init__(self) -> None:
