@@ -68,7 +68,9 @@ class Tensor:
                 input_tensor = ctx.saved_tensors[i]
                 if input_tensor._requires_grad:
                     input_tensor._backward_impl(grad_input, visited)
-
+    def max_pool2d(self, pool_size=2):
+        from autograd.operations.max_pool_2d_operation import MaxPool2dOperation
+        return MaxPool2dOperation.apply(self, pool_size)
     def relu(self):
         return ReLUOperation.apply(self)
 
