@@ -71,6 +71,7 @@ class Tensor:
     def max_pool2d(self, pool_size=2):
         from autograd.operations.max_pool_2d_operation import MaxPool2dOperation
         return MaxPool2dOperation.apply(self, pool_size)
+
     def relu(self):
         return ReLUOperation.apply(self)
 
@@ -79,6 +80,10 @@ class Tensor:
 
     def tanh(self):
         return TanhOperation.apply(self)
+    
+    def softmax(self):
+        from autograd.operations.softmax import SoftmaxOperation
+        return SoftmaxOperation.apply(self)
 
     def __neg__(self):
         return self * -1
