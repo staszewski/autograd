@@ -21,18 +21,22 @@ class Operation(ABC):
         pass
 
     @classmethod
-    def apply(cls, *args: 'Tensor') -> 'Tensor':
+    def apply(cls, *args: 'Tensor', **kwargs) -> 'Tensor':
         """Apply the operation to the given inputs."""
         # Import here to avoid circular import
         from autograd.tensor import Tensor
 
         ctx = Context()
-        output = cls.forward(ctx, *args)
+        output = cls.forward(ctx, *args, **kwargs)
+        
+        tensor_args = [a for a in args if isinstance(a, Tensor)]
+        tensor_kwargs = [v for v in kwargs.values() if isinstance(v, Tensor)] 
+        tensors = tensor_args + tensor_kwargs
 
-        requires_grad = any(arg.requires_grad for arg in args)
+        requires_grad = any(t.requires_grad for t in tensors)
 
         result = Tensor(output.data, requires_grad=requires_grad)
         result._grad_fn = (cls, ctx)
-        result._prev = set(args)
+        result._prev = set(tensors)
 
         return result
