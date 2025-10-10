@@ -85,6 +85,16 @@ class Tensor:
         from autograd.operations.softmax import SoftmaxOperation
         return SoftmaxOperation.apply(self)
 
+    def log_softmax(self):
+        from autograd.operations.log_softmax import LogSoftmaxOperation 
+        return LogSoftmaxOperation.apply(self)
+    
+    def cross_entropy_with_logits(self, target, axis=0):
+        from autograd.operations.log_softmax import LogSoftmaxOperation
+        from autograd.operations.nll_loss import NLLLoss
+        log_probs = LogSoftmaxOperation.apply(self, axis=axis)
+        return NLLLoss.apply(log_probs, target, axis=axis)
+
     def __neg__(self):
         return self * -1
 
