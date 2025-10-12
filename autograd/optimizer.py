@@ -1,5 +1,6 @@
 from typing import Iterable, List
 from autograd.tensor import Tensor
+import numpy as np
 
 class Optimizer:
     def __init__(self, params: Iterable[Tensor]) -> None:
@@ -22,10 +23,17 @@ class Optimizer:
         raise NotImplementedError("To be overwritten in a subclass")
 
 class SGD(Optimizer):
-    def __init__(self, params: Iterable[Tensor], lr: float = 1e-2) -> None:
+    def __init__(self, params: Iterable[Tensor], lr: float = 1e-2, momentum: float = 0.0) -> None:
         super().__init__(params)
         self.lr = float(lr)
+        self.momentum = float(momentum)
+        self._velocity = {id(p): np.zeros_like(p._data) for p in self.params}
 
     def step(self):
         for p in self.params:
-            p._data = p._data - self.lr * p._grad
+            g = p._grad
+            if self.momentum > 0.0:
+                v = self._velocity[id(p)] = self.momentum * self._velocity[id(p)] + g
+                p._data = p._data - self.lr * v
+            else:
+                p._data = p._data - self.lr * p._grad
