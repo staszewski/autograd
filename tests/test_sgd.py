@@ -57,3 +57,22 @@ def test_sgd_momentum():
     steps_v = run(w_van, van)
     steps_m = run(w_mom, mom)
     assert steps_m < steps_v
+
+def test_sgd_grad_clip_scalar():
+    w = Tensor(np.array([[0.0]], np.float32), requires_grad=True)
+    w._grad = np.array([[10.0]], np.float32)
+    lr = 0.1
+    grad_clip = 2.0
+    opt = SGD([w], lr=lr)
+    opt.step(grad_clip=grad_clip)
+    assert np.allclose(w.data, -(lr * grad_clip))
+
+def test_sgd_grad_clip_global_norm_two_params():
+    a = Tensor(np.array([[0.0]], np.float32), requires_grad=True)
+    b = Tensor(np.array([[0.0]], np.float32), requires_grad=True)
+    a._grad = np.array([[3.0]], np.float32)
+    b._grad = np.array([[4.0]], np.float32)
+    # squared norm = 25, norm = sqrt(25) = 5
+    opt = SGD([a, b], lr=1.0)
+    opt.step(grad_clip=1.0)  # scale = 1/5
+    assert np.allclose(a.data, -0.6) and np.allclose(b.data, -0.8)
