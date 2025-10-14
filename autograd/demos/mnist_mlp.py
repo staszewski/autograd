@@ -4,6 +4,7 @@ from autograd.tensor import Tensor
 from autograd.mlp import MLP
 from autograd.operations.log_softmax import LogSoftmaxOperation
 from autograd.operations.nll_loss import NLLLoss
+from autograd.optimizer import SGD
 
 def one_hot(y, num_classes=10):
     oh = np.zeros((num_classes, y.size), dtype=np.float32)
@@ -30,6 +31,7 @@ Xtr_t, Ytr_t = Tensor(Xtr, False), Tensor(Ytr, False)
 Xte_t, Yte_t = Tensor(Xte, False), Tensor(Yte, False)
 
 mlp = MLP(input_size=784, hidden_size=256, output_size=10, activation="tanh")
+opt = SGD(mlp.parameters(), lr=0.05, momentum=0.9, weight_decay=1e-4)
 lr, batch_size, epochs = 0.05, 256, 20
 
 def accuracy(logits, Y):
@@ -51,12 +53,9 @@ for ep in range(epochs):
         loss = NLLLoss.apply(logp, yb, axis=0)
         tot_loss += float(loss.data.mean())
 
-        for p in mlp.parameters(): 
-            p.zero_grad()
+        opt.zero_grad()
         loss.backward(np.ones_like(loss.data) / loss.data.shape[1])
-
-        for p in mlp.parameters(): 
-            p._data -= lr * p._grad
+        opt.step()
 
     num_batches = int(np.ceil(N / batch_size))
     print('Average loss', tot_loss / num_batches)
