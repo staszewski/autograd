@@ -15,7 +15,8 @@ class Adam(Optimizer):
         self._t = 0
         self.weight_decay = weight_decay
 
-    def step(self):
+    def step(self, grad_clip: float | None = None):
+        self._clip_grads(grad_clip)
         self._t += 1
         b1t = 1.0 - self.beta1 ** self._t
         b2t = 1.0 - self.beta2 ** self._t
@@ -30,5 +31,5 @@ class Adam(Optimizer):
             if self.weight_decay > 0.0:
                 p._data -= self.lr * self.weight_decay * p._data
 
-            p._data = p._data - self.lr * (m_hat / (np.sqrt(v_hat) + self.eps)) 
+            p._data = p._data - self.lr * (m_hat / (np.sqrt(v_hat) + self.eps))  
                 
