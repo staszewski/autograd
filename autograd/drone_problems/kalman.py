@@ -79,21 +79,17 @@ class Kalman2D:
           K = P^- H^T (H P^- H^T + R)^{-1}
           \hat{x} = \hat{x}^- + K (z - H \hat{x}^-)
           P = P^- - K H P^-
-        If z is None, skips update and promotes predicted values.
+        If z is None, raises an error.
+        If predict was not called before update, raises an error.
         """
         if z is None:
-            # Promote prediction to current estimate
-            if self.hat_x_minus is not None:
-                self.hat_x = self.hat_x_minus
-                self.P = self.P_minus
-            return
+            raise ValueError("z cannot be None")
+
+        if self.hat_x_minus is None or self.P_minus is None:
+            raise ValueError("predict must be called before update")
 
         z = np.asarray(z, dtype=np.float32).reshape(2,)
         self._ensure_initialized(z)
-
-        # If predict wasn't called, do an implicit prediction
-        if self.hat_x_minus is None or self.P_minus is None:
-            self.predict()
 
         S = self.H @ self.P_minus @ self.H.T + self.R
         K = self.P_minus @ self.H.T @ np.linalg.inv(S)
@@ -103,6 +99,14 @@ class Kalman2D:
         self.P = self.P_minus - K @ self.H @ self.P_minus
 
         # Clear minus buffers (next cycle should call predict again)
+        self.hat_x_minus = None
+        self.P_minus = None
+
+    def commit_prediction(self):
+        if self.hat_x_minus is None or self.P_minus is None:
+            raise ValueError("predict must be called before update")
+        self.hat_x = self.hat_x_minus
+        self.P = self.P_minus
         self.hat_x_minus = None
         self.P_minus = None
 
