@@ -9,6 +9,12 @@ from autograd.operations.log_softmax import LogSoftmaxOperation
 from autograd.operations.nll_loss import NLLLoss
 from autograd.utils.lr import StepLR
 
+def save_simplecnn(model, path: str):
+    np.savez(path,
+             kernels=[k.data for k in model.kernels],
+             W=[w.data for w in model.W],
+             b=[b.data for b in model.b])
+
 root = str((Path(__file__).resolve().parents[2] / "data" / "hit-uav"))
 
 Xtr, Ytr = build_patches(root, "train",
@@ -52,3 +58,7 @@ for ep in range(epochs):
             true = int(np.argmax(yb.data[i]))
             correct += int(pred == true); tot += 1
     print(f"epoch {ep+1}: loss={total/max(count,1):.4f}, lr={opt.lr:.5f}, val_acc={correct/max(tot,1):.3f}")
+
+ckpt = str((Path(__file__).resolve().parents[2] / "data" / "hit-uav" / "hituav_person_simplecnn.npz"))
+save_simplecnn(model, ckpt)
+print("Saved model to", ckpt)
