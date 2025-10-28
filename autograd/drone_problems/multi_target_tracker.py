@@ -30,19 +30,28 @@ class MultiTargetDetector:
     
         return Tensor(patch_data)
 
-    def detect_all_targets(self, image, threshold=THRESHOLD):
-        detected_positions = []
+    def detect_all_targets(self, image, threshold=THRESHOLD, use_nms = True, iou_threshold = 0.3):
+        detections = []
         image_size = image._data.shape[0]
 
         for i in range(image_size):
             for j in range(image_size):
                 patch = self.extract_patch(image, i, j)
-                detected_position = self.single_detector.forward(patch)
+                prediction = self.single_detector.forward(patch)
+                score = float(prediction.data[0][0])
 
-                if detected_position.data > threshold:
-                    detected_positions.append((i, j))
+                if score > threshold:
+                    if use_nms:
+                        box = [j, i, j + self.PATCH_SIZE, i + self.PATCH_SIZE]
+                        detections.append((box, score))
+                    else:
+                        detections.append((i, j))
         
-        return detected_positions
+        if use_nms:
+            from autograd.operations.bbox_ops import non_max_suppression
+            detections = non_max_suppression(detections, iou_threshold=iou_threshold)
+
+        return detections
 
     def train(self, epochs=100, learning_rate=0.01):
         training_images, training_labels = self.generate_multi_target_training_data()
@@ -114,7 +123,11 @@ def demo_multi_target_detection():
     print("Training...")
     detector.train(epochs=100, learning_rate=0.01)
     
-    print("\nTesting trained detector:")
+    print("\n" + "="*60)
+    print("Testing trained detector:")
+    print("="*60)
+    
+    # Create test image with 2 targets (crosshairs)
     test_image = np.zeros((10, 10), dtype=np.float32)
     test_image[:, 3] = 1.0
     test_image[2, :] = 1.0
@@ -122,48 +135,58 @@ def demo_multi_target_detection():
     test_image[6, :] = 1.0
     
     test_tensor = Tensor(test_image)
-    detected_positions = detector.detect_all_targets(test_tensor)
-    print(f"Detected targets at positions: {detected_positions}")
-
     true_targets = [(2, 3), (6, 7)]
-
-    print("True target positions:")
-    for i, pos in enumerate(true_targets):
-        print(f"  Target {i+1}: {pos}")
-
+    
+    print(f"\nTrue target positions: {true_targets}")
+    print(f"Detection threshold: {detector.THRESHOLD}")
+    
+    # BEFORE NMS: Old behavior
+    print("\n" + "-"*60)
+    print("WITHOUT NMS (old method):")
+    print("-"*60)
+    detected_positions_old = detector.detect_all_targets(test_tensor, use_nms=False)
+    print(f"Total detections: {len(detected_positions_old)}")
+    print(f"Detected at: {detected_positions_old[:10]}")  # Show first 10
+    if len(detected_positions_old) > 10:
+        print(f"... and {len(detected_positions_old) - 10} more")
+    
+    # AFTER NMS: New behavior
+    print("\n" + "-"*60)
+    print("WITH NMS (new method):")
+    print("-"*60)
+    detected_boxes_new = detector.detect_all_targets(test_tensor, use_nms=True, iou_threshold=0.3)
+    print(f"Total detections: {len(detected_boxes_new)}")
+    for i, (box, score) in enumerate(detected_boxes_new):
+        x1, y1, x2, y2 = box
+        center_x = (x1 + x2) / 2
+        center_y = (y1 + y2) / 2
+        print(f"  Detection {i+1}: box=[{x1},{y1},{x2},{y2}], center=({center_x:.1f},{center_y:.1f}), score={score:.3f}")
+    
+    # Evaluate accuracy
+    print("\n" + "-"*60)
+    print("ACCURACY CHECK:")
+    print("-"*60)
     for i, true_pos in enumerate(true_targets):
         print(f"\nTarget {i+1} at {true_pos}:")
-        close_detections = []
-        for det_pos in detected_positions:
-            distance = abs(true_pos[0] - det_pos[0]) + abs(true_pos[1] - det_pos[1])
+        
+        # Check NMS results
+        found_by_nms = False
+        for box, score in detected_boxes_new:
+            x1, y1, x2, y2 = box
+            center_x = (x1 + x2) / 2
+            center_y = (y1 + y2) / 2
+            distance = abs(true_pos[0] - center_y) + abs(true_pos[1] - center_x)
             if distance <= 2:
-                close_detections.append((det_pos, distance))
+                found_by_nms = True
+                print(f"  ✓ Found by NMS - distance={distance:.1f}, score={score:.3f}")
+                break
+        
+        if not found_by_nms:
+            print(f"  ✗ MISSED by NMS")
     
-        if close_detections:
-            print(f"Found nearby: {close_detections}")
-        else:
-            print(f"MISSED - no detections within 2 pixels")
-
-    # target 1 at (2, 3)
-    patch_at_target1 = detector.extract_patch(test_tensor, 2, 3)
-    prediction1 = detector.single_detector.forward(patch_at_target1)
-    print(f"Prediction at target 1 location (2,3): {prediction1.data[0][0]:.4f}")
-    
-    # target 2 at (6, 7)
-    patch_at_target2 = detector.extract_patch(test_tensor, 6, 7)
-    prediction2 = detector.single_detector.forward(patch_at_target2)
-    print(f"Prediction at target 2 location (6,7): {prediction2.data[0][0]:.4f}")
-    
-    print(f"Current threshold: {detector.THRESHOLD}")
-
-    print("\nHigh-confidence patches (>0.6):")
-    image_size = test_tensor._data.shape[0]
-    for i in range(image_size):
-        for j in range(image_size):
-            patch = detector.extract_patch(test_tensor, i, j)
-            prediction = detector.single_detector.forward(patch)
-            if prediction.data[0][0] > 0.6:
-                print(f"Position ({i},{j}): {prediction.data[0][0]:.4f}")
+    print("\n" + "="*60)
+    print(f"SUMMARY: {len(detected_positions_old)} raw detections → {len(detected_boxes_new)} after NMS")
+    print("="*60)
 
 if __name__ == "__main__":
     demo_multi_target_detection()
