@@ -1,10 +1,6 @@
-"""
-Demo: Defender intercepts threat using pure pursuit
-"""
 import numpy as np
 import matplotlib.pyplot as plt
 from autograd.drone_problems.pursuit import pure_pursuit
-
 
 class SimpleDrone:
     """Simplified 2D drone (easier than full Drone class)"""
@@ -55,20 +51,16 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
         intercepted: Whether interception succeeded
         time_to_intercept: Time taken (or None)
     """
-    # Initialize drones
     defender = SimpleDrone(x=0, y=0, speed=defender_speed)
     threat = SimpleDrone(x=threat_start[0], y=threat_start[1], speed=threat_speed)
     
-    # Normalize and set threat direction
     direction_array = np.array(threat_direction)
     direction_norm = direction_array / np.linalg.norm(direction_array)
     threat.set_velocity(direction_norm[0] * threat_speed,
                        direction_norm[1] * threat_speed)
     
-    # Simulation parameters
-    dt = 0.1  # Time step (seconds)
-    intercept_distance = 2.0  # Consider intercepted if within 2 units
-    
+    dt = 0.1 
+    intercept_distance = 2.0
     intercepted = False
     time_to_intercept = None
     t = 0
@@ -79,9 +71,7 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
     print(f"Threat direction: {threat_direction} (normalized: {direction_norm})")
     print("-" * 60)
     
-    # Simulation loop
     while t < max_time:
-        # Compute pursuit direction
         pursuit_vel = pure_pursuit(
             defender.pos,
             defender.speed,
@@ -90,21 +80,16 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
             lookahead_time=1.0
         )
         
-        # Update defender velocity
         defender.set_velocity(pursuit_vel[0], pursuit_vel[1])
         
-        # Update both drones
         defender.update(dt)
         threat.update(dt)
         
-        # Check distance
         distance = np.sqrt((defender.x - threat.x)**2 + (defender.y - threat.y)**2)
         
-        # Print progress every second
         if int(t * 10) % 10 == 0:
             print(f"t={t:5.1f}s: distance={distance:6.2f}, defender=({defender.x:.1f},{defender.y:.1f}), threat=({threat.x:.1f},{threat.y:.1f})")
         
-        # Check interception
         if distance < intercept_distance:
             intercepted = True
             time_to_intercept = t
@@ -123,61 +108,111 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
     return defender, threat, intercepted, time_to_intercept
 
 
-def visualize_interception(defender, threat, intercepted, time_to_intercept):
-    """Create visualization of interception"""
+def animate_interception(defender, threat, intercepted, time_to_intercept):
+    """Create animated visualization of interception"""
+    from matplotlib.animation import FuncAnimation
+    
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
     
-    # LEFT: Trajectory plot
-    ax1.plot(defender.path_x, defender.path_y, 'b-', linewidth=2,
-             label='Defender Path', marker='o', markersize=3, markevery=10)
-    ax1.plot(threat.path_x, threat.path_y, 'r-', linewidth=2,
-             label='Threat Path', marker='s', markersize=3, markevery=10)
-    
-    # Mark start positions
-    ax1.plot(defender.path_x[0], defender.path_y[0], 'go', markersize=15,
-             label='Defender Start', markeredgewidth=2, markeredgecolor='darkgreen')
-    ax1.plot(threat.path_x[0], threat.path_y[0], 'mo', markersize=15,
-             label='Threat Start', markeredgewidth=2, markeredgecolor='darkred')
-    
-    # Mark interception point
+    total_frames = len(defender.path_x)
     if intercepted:
-        ax1.plot(defender.path_x[-1], defender.path_y[-1], 'y*', markersize=25,
-                label=f'Intercept ({time_to_intercept:.1f}s)',
-                markeredgewidth=2, markeredgecolor='orange')
+        intercept_frame = int(time_to_intercept * 10)
+        end_frame = min(intercept_frame + 20, total_frames)
+    else:
+        end_frame = total_frames
     
+    defender_line, = ax1.plot([], [], 'b-', linewidth=2, label='Defender', alpha=0.6)
+    threat_line, = ax1.plot([], [], 'r-', linewidth=2, label='Threat', alpha=0.6)
+    defender_dot, = ax1.plot([], [], 'bo', markersize=12, markeredgewidth=2, 
+                            markeredgecolor='darkblue')
+    threat_dot, = ax1.plot([], [], 'rs', markersize=12, markeredgewidth=2,
+                          markeredgecolor='darkred')
+    
+    ax1.plot(defender.path_x[0], defender.path_y[0], 'go', markersize=10, 
+            label='Start', alpha=0.5)
+    ax1.plot(threat.path_x[0], threat.path_y[0], 'mo', markersize=10, alpha=0.5)
+    
+    all_x = defender.path_x[:end_frame] + threat.path_x[:end_frame]
+    all_y = defender.path_y[:end_frame] + threat.path_y[:end_frame]
+    margin = 5
+    ax1.set_xlim(min(all_x) - margin, max(all_x) + margin)
+    ax1.set_ylim(min(all_y) - margin, max(all_y) + margin)
     ax1.set_xlabel('X Position', fontsize=13, fontweight='bold')
     ax1.set_ylabel('Y Position', fontsize=13, fontweight='bold')
-    ax1.set_title('Pursuit Trajectories', fontsize=15, fontweight='bold')
-    ax1.legend(fontsize=11, loc='best')
+    ax1.set_title('Live Pursuit', fontsize=15, fontweight='bold')
+    ax1.legend(fontsize=11, loc='upper left')
     ax1.grid(True, alpha=0.3, linestyle='--')
     ax1.set_aspect('equal')
     
-    # RIGHT: Distance over time
-    times = np.arange(len(defender.path_x)) * 0.1
+    time_text = ax1.text(0.02, 0.98, '', transform=ax1.transAxes,
+                        fontsize=12, verticalalignment='top',
+                        bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
+    ax2.set_xlim(0, end_frame * 0.1)
     distances = [np.sqrt((defender.path_x[i] - threat.path_x[i])**2 +
                         (defender.path_y[i] - threat.path_y[i])**2)
-                for i in range(len(times))]
+                for i in range(end_frame)]
+    ax2.set_ylim(0, max(distances) * 1.1)
     
-    ax2.plot(times, distances, 'g-', linewidth=2.5, marker='o', markersize=4)
+    distance_line, = ax2.plot([], [], 'g-', linewidth=2.5)
+    distance_dot, = ax2.plot([], [], 'go', markersize=10)
     ax2.axhline(y=2.0, color='r', linestyle='--', linewidth=2,
                alpha=0.7, label='Intercept Threshold')
     
     if intercepted:
         ax2.axvline(x=time_to_intercept, color='orange', linestyle='--',
-                   linewidth=2, alpha=0.7, label=f'Intercept at {time_to_intercept:.1f}s')
+                   linewidth=2, alpha=0.7)
     
     ax2.set_xlabel('Time (seconds)', fontsize=13, fontweight='bold')
-    ax2.set_ylabel('Distance Between Drones', fontsize=13, fontweight='bold')
-    ax2.set_title('Closing Distance Over Time', fontsize=15, fontweight='bold')
+    ax2.set_ylabel('Distance', fontsize=13, fontweight='bold')
+    ax2.set_title('Distance Over Time', fontsize=15, fontweight='bold')
     ax2.legend(fontsize=11)
     ax2.grid(True, alpha=0.3, linestyle='--')
     
     status = "SUCCESS" if intercepted else "FAILED"
-    plt.suptitle(f'Pure Pursuit Interception Demo - {status}',
+    fig.suptitle(f'Pure Pursuit - {status}',
                 fontsize=17, fontweight='bold', y=0.98)
+    
+    def init():
+        """Initialize animation"""
+        defender_line.set_data([], [])
+        threat_line.set_data([], [])
+        defender_dot.set_data([], [])
+        threat_dot.set_data([], [])
+        distance_line.set_data([], [])
+        distance_dot.set_data([], [])
+        time_text.set_text('')
+        return defender_line, threat_line, defender_dot, threat_dot, distance_line, distance_dot, time_text
+    
+    def update(frame):
+        """Update animation frame"""
+        defender_line.set_data(defender.path_x[:frame+1], defender.path_y[:frame+1])
+        threat_line.set_data(threat.path_x[:frame+1], threat.path_y[:frame+1])
+        
+        defender_dot.set_data([defender.path_x[frame]], [defender.path_y[frame]])
+        threat_dot.set_data([threat.path_x[frame]], [threat.path_y[frame]])
+        
+        times = np.arange(frame + 1) * 0.1
+        dists = distances[:frame+1]
+        distance_line.set_data(times, dists)
+        distance_dot.set_data([times[-1]], [dists[-1]])
+        
+        current_time = frame * 0.1
+        current_dist = distances[frame]
+        time_text.set_text(f'Time: {current_time:.1f}s\nDistance: {current_dist:.2f}')
+        
+        if intercepted and frame >= int(time_to_intercept * 10):
+            time_text.set_text(f'INTERCEPTED!\nTime: {time_to_intercept:.1f}s')
+        
+        return defender_line, threat_line, defender_dot, threat_dot, distance_line, distance_dot, time_text
+    
+    anim = FuncAnimation(fig, update, init_func=init, frames=end_frame,
+                        interval=50, blit=True, repeat=True)
+    
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
-
+    
+    return anim 
 
 if __name__ == "__main__":
     print("\n" + "="*70)
@@ -192,10 +227,10 @@ if __name__ == "__main__":
         defender_speed=5.0,
         threat_speed=2.0,
         threat_start=(50, 50),
-        threat_direction=(-1, -1),  # Flying toward origin
+        threat_direction=(-1, -1),
         max_time=30.0
     )
-    visualize_interception(defender, threat, intercepted, time_to_intercept)
+    anim1 = animate_interception(defender, threat, intercepted, time_to_intercept)
     
     # Scenario 2: Threat fleeing (harder)
     print("\n" + "="*70)
@@ -205,10 +240,10 @@ if __name__ == "__main__":
         defender_speed=5.0,
         threat_speed=2.0,
         threat_start=(20, 20),
-        threat_direction=(1, 1),  # Flying away from origin
+        threat_direction=(1, 1),
         max_time=30.0
     )
-    visualize_interception(defender, threat, intercepted, time_to_intercept)
+    anim2 = animate_interception(defender, threat, intercepted, time_to_intercept)
     
     # Scenario 3: Threat too fast (impossible)
     print("\n" + "="*70)
@@ -218,10 +253,10 @@ if __name__ == "__main__":
         defender_speed=2.0,
         threat_speed=5.0,
         threat_start=(20, 20),
-        threat_direction=(1, 1),  # Fast threat escaping
+        threat_direction=(1, 1),
         max_time=30.0
     )
-    visualize_interception(defender, threat, intercepted, time_to_intercept)
+    anim3 = animate_interception(defender, threat, intercepted, time_to_intercept)
     
     print("\n" + "="*70)
     print("  All Scenarios Complete!")
