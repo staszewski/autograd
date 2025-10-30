@@ -108,7 +108,7 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
     return defender, threat, intercepted, time_to_intercept
 
 
-def animate_interception(defender, threat, intercepted, time_to_intercept):
+def animate_interception(defender, threat, intercepted, time_to_intercept, save_path=None):
     """Create animated visualization of interception"""
     from matplotlib.animation import FuncAnimation
     
@@ -145,7 +145,7 @@ def animate_interception(defender, threat, intercepted, time_to_intercept):
     ax1.set_aspect('equal')
     
     time_text = ax1.text(0.02, 0.98, '', transform=ax1.transAxes,
-                        fontsize=12, verticalalignment='top',
+                        fontsize=12, verticalalignment='bottom',
                         bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
     
     ax2.set_xlim(0, end_frame * 0.1)
@@ -210,6 +210,10 @@ def animate_interception(defender, threat, intercepted, time_to_intercept):
                         interval=50, blit=True, repeat=True)
     
     plt.tight_layout(rect=[0, 0, 1, 0.96])
+    if save_path:
+        print(f"Saving animation to {save_path}...")
+        anim.save(save_path, writer='pillow', fps=20, dpi=100)
+        print(f"✅ Saved to {save_path}")
     plt.show()
     
     return anim 
@@ -230,7 +234,7 @@ if __name__ == "__main__":
         threat_direction=(-1, -1),
         max_time=30.0
     )
-    anim1 = animate_interception(defender, threat, intercepted, time_to_intercept)
+    anim1 = animate_interception(defender, threat, intercepted, time_to_intercept, save_path="scenario1_approaching.gif")
     
     # Scenario 2: Threat fleeing (harder)
     print("\n" + "="*70)
@@ -243,7 +247,7 @@ if __name__ == "__main__":
         threat_direction=(1, 1),
         max_time=30.0
     )
-    anim2 = animate_interception(defender, threat, intercepted, time_to_intercept)
+    anim2 = animate_interception(defender, threat, intercepted, time_to_intercept, save_path="scenario2_fleeing.gif")
     
     # Scenario 3: Threat too fast (impossible)
     print("\n" + "="*70)
@@ -256,7 +260,7 @@ if __name__ == "__main__":
         threat_direction=(1, 1),
         max_time=30.0
     )
-    anim3 = animate_interception(defender, threat, intercepted, time_to_intercept)
+    anim3 = animate_interception(defender, threat, intercepted, time_to_intercept, save_path="scenario3_impossible.gif")
     
     print("\n" + "="*70)
     print("  All Scenarios Complete!")
