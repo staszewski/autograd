@@ -34,7 +34,8 @@ class SimpleDrone:
 
 
 def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
-                        threat_start=(50, 50), threat_direction=(-1, -1)):
+                        threat_start=(50, 50), threat_direction=(-1, -1),
+                        defender_start=(0, 0)):
     """
     Run interception simulation.
     
@@ -44,6 +45,7 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
         max_time: Maximum simulation time (seconds)
         threat_start: Starting position of threat (x, y)
         threat_direction: Direction threat flies (dx, dy) - will be normalized
+        defender_start: Starting position of defender (x, y)
     
     Returns:
         defender: Defender drone object with trajectory
@@ -51,7 +53,7 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
         intercepted: Whether interception succeeded
         time_to_intercept: Time taken (or None)
     """
-    defender = SimpleDrone(x=0, y=0, speed=defender_speed)
+    defender = SimpleDrone(x=defender_start[0], y=defender_start[1], speed=defender_speed)
     threat = SimpleDrone(x=threat_start[0], y=threat_start[1], speed=threat_speed)
     
     direction_array = np.array(threat_direction)
@@ -108,7 +110,11 @@ def run_interception_sim(defender_speed=5.0, threat_speed=2.0, max_time=30.0,
     return defender, threat, intercepted, time_to_intercept
 
 
+<<<<<<< Updated upstream
 def animate_interception(defender, threat, intercepted, time_to_intercept, save_path=None):
+=======
+def animate_interception(defender, threat, intercepted, time_to_intercept, save_path=None, show=False):
+>>>>>>> Stashed changes
     """Create animated visualization of interception"""
     from matplotlib.animation import FuncAnimation
     
@@ -210,11 +216,25 @@ def animate_interception(defender, threat, intercepted, time_to_intercept, save_
                         interval=50, blit=True, repeat=True)
     
     plt.tight_layout(rect=[0, 0, 1, 0.96])
+<<<<<<< Updated upstream
+=======
+    
+    # Save if path provided
+>>>>>>> Stashed changes
     if save_path:
         print(f"Saving animation to {save_path}...")
         anim.save(save_path, writer='pillow', fps=20, dpi=100)
         print(f"✅ Saved to {save_path}")
+<<<<<<< Updated upstream
     plt.show()
+=======
+    
+    # Only show if requested (disabled by default due to macOS matplotlib bug)
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+>>>>>>> Stashed changes
     
     return anim 
 
@@ -234,7 +254,12 @@ if __name__ == "__main__":
         threat_direction=(-1, -1),
         max_time=30.0
     )
+<<<<<<< Updated upstream
     anim1 = animate_interception(defender, threat, intercepted, time_to_intercept, save_path="scenario1_approaching.gif")
+=======
+    anim1 = animate_interception(defender, threat, intercepted, time_to_intercept,
+                                 save_path='scenario1_approaching.gif')
+>>>>>>> Stashed changes
     
     # Scenario 2: Threat fleeing (harder)
     print("\n" + "="*70)
@@ -247,11 +272,31 @@ if __name__ == "__main__":
         threat_direction=(1, 1),
         max_time=30.0
     )
+<<<<<<< Updated upstream
     anim2 = animate_interception(defender, threat, intercepted, time_to_intercept, save_path="scenario2_fleeing.gif")
+=======
+    anim2 = animate_interception(defender, threat, intercepted, time_to_intercept,
+                                 save_path='scenario2_fleeing.gif')
+>>>>>>> Stashed changes
     
-    # Scenario 3: Threat too fast (impossible)
+    # Scenario 3: Defender at different location (flanking intercept)
     print("\n" + "="*70)
-    print("  Scenario 3: Threat Faster Than Defender (Impossible)")
+    print("  Scenario 3: Defender Flanking Position")
+    print("="*70)
+    defender, threat, intercepted, time_to_intercept = run_interception_sim(
+        defender_speed=5.0,
+        threat_speed=2.0,
+        threat_start=(50, 10),
+        threat_direction=(-1, 0),  # Moving left
+        defender_start=(30, 40),   # Starting to the side
+        max_time=30.0
+    )
+    anim3 = animate_interception(defender, threat, intercepted, time_to_intercept,
+                                 save_path='scenario3_flanking.gif')
+    
+    # Scenario 4: Threat too fast (impossible)
+    print("\n" + "="*70)
+    print("  Scenario 4: Threat Faster Than Defender (Impossible)")
     print("="*70)
     defender, threat, intercepted, time_to_intercept = run_interception_sim(
         defender_speed=2.0,
@@ -260,7 +305,12 @@ if __name__ == "__main__":
         threat_direction=(1, 1),
         max_time=30.0
     )
+<<<<<<< Updated upstream
     anim3 = animate_interception(defender, threat, intercepted, time_to_intercept, save_path="scenario3_impossible.gif")
+=======
+    anim4 = animate_interception(defender, threat, intercepted, time_to_intercept,
+                                 save_path='scenario4_impossible.gif')
+>>>>>>> Stashed changes
     
     print("\n" + "="*70)
     print("  All Scenarios Complete!")
