@@ -28,3 +28,18 @@ class SimpleDrone:
     @property
     def vel(self):
         return (self.vx, self.vy)
+
+
+class SimpleDrone3D:
+    """Simple 3D drone"""
+
+    def __init__(self, x, y, z):
+        self.x, self.y, self.z = x, y, z
+
+    def set_velocity(self, vx, vy, vz):
+        self.vx, self.vy, self.vz = vx, vy, vz
+
+    def update(self, dt):
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.z += self.vz * dt
