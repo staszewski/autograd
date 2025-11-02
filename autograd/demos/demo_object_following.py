@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.animation import FuncAnimation
 from autograd.simulations.object_following_demo import ObjectFollower
 from autograd.drone_problems.simple_drone import SimpleDrone
@@ -47,6 +48,78 @@ def simulate_object_following():
         t += dt
 
     print("Following simulation complete!")
+    animate_following(drone_positions, target_positions, times)
+
+    return drone, target_positions, drone_positions
+
+
+def simulate_complex_following():
+    """Advanced following demo with figure-8 target motion"""
+
+    # Target moves in FIGURE-8 pattern
+    t_param = 0.0
+    speed_factor = 0.5  # Controls how fast the figure-8 is traced
+
+    # Create drone and follower
+    drone = SimpleDrone(x=0, y=8, speed=6.0)  # Start above the pattern
+    follower = ObjectFollower(following_distance=3.0, kp=0.6)  # Closer following
+
+    dt = 0.1
+    max_time = 30.0
+    t = 0.0
+
+    target_positions = []
+    drone_positions = []
+    times = []
+
+    print("Starting COMPLEX object following simulation...")
+    print("Target: FIGURE-8 pattern")
+    print("Drone: following 3m behind")
+    print("-" * 50)
+
+    while t < max_time:
+        # FIGURE-8 parametric equations
+        # x = sin(t) * scale_x
+        # y = sin(2*t) * scale_y / 2
+        scale_x, scale_y = 8, 6
+
+        target_x = np.sin(t_param) * scale_x
+        target_y = np.sin(2 * t_param) * scale_y / 2
+
+        # Calculate velocity (derivative of position)
+        target_vx = np.cos(t_param) * scale_x * speed_factor
+        target_vy = 2 * np.cos(2 * t_param) * scale_y / 2 * speed_factor
+
+        target_pos = (target_x, target_y)
+        target_vel = (target_vx, target_vy)
+
+        # Update follower
+        follower.update_target(target_pos, target_vel)
+        follower.update_drone(drone.pos)
+
+        # Move drone
+        vx, vy = follower.get_control_command()
+        drone.set_velocity(vx, vy)
+        drone.update(dt)
+
+        # Store data
+        target_positions.append(target_pos)
+        drone_positions.append(drone.pos)
+        times.append(t)
+
+        # Update parametric parameter
+        t_param += speed_factor * dt
+
+        # Progress
+        if int(t * 10) % 150 == 0:  # Every 15 seconds
+            print(".1f")
+
+        t += dt
+
+    print("-" * 50)
+    print("Complex following simulation complete!")
+
+    # Use the existing animation function
     animate_following(drone_positions, target_positions, times)
 
     return drone, target_positions, drone_positions
@@ -148,4 +221,5 @@ def animate_following(drone_positions, target_positions, times):
 
 
 if __name__ == "__main__":
-    simulate_object_following()
+    # simulate_object_following()
+    simulate_complex_following()
