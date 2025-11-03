@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
-from autograd.simulations.object_following_demo import ObjectFollower
+from autograd.drone_problems.object_follower import ObjectFollower
 from autograd.drone_problems.simple_drone import SimpleDrone
 
 
