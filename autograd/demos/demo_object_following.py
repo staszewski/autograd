@@ -5,8 +5,13 @@ from autograd.drone_problems.object_follower import ObjectFollower
 from autograd.drone_problems.simple_drone import SimpleDrone
 
 
-def simulate_object_following():
-    """Simulate drone following a moving target with visualization"""
+def simulate_object_following(save_gif=False, gif_filename="simple_following.gif"):
+    """Simulate drone following a moving target with visualization
+    
+    Args:
+        save_gif: If True, save animation as GIF
+        gif_filename: Output filename for GIF
+    """
 
     target_x, target_y = 10, 10
     target_vx, target_vy = 2, 0
@@ -48,13 +53,18 @@ def simulate_object_following():
         t += dt
 
     print("Following simulation complete!")
-    animate_following(drone_positions, target_positions, times)
+    animate_following(drone_positions, target_positions, times, save_gif=save_gif, filename=gif_filename)
 
     return drone, target_positions, drone_positions
 
 
-def simulate_complex_following():
-    """Advanced following demo with figure-8 target motion"""
+def simulate_complex_following(save_gif=False, gif_filename="complex_following.gif"):
+    """Advanced following demo with figure-8 target motion
+    
+    Args:
+        save_gif: If True, save animation as GIF
+        gif_filename: Output filename for GIF
+    """
 
     # Target moves in FIGURE-8 pattern
     t_param = 0.0
@@ -120,13 +130,21 @@ def simulate_complex_following():
     print("Complex following simulation complete!")
 
     # Use the existing animation function
-    animate_following(drone_positions, target_positions, times)
+    animate_following(drone_positions, target_positions, times, save_gif=save_gif, filename=gif_filename)
 
     return drone, target_positions, drone_positions
 
 
-def animate_following(drone_positions, target_positions, times):
-    """Animate the following behavior"""
+def animate_following(drone_positions, target_positions, times, save_gif=False, filename="drone_following.gif"):
+    """Animate the following behavior
+    
+    Args:
+        drone_positions: List of (x, y) drone positions
+        target_positions: List of (x, y) target positions
+        times: List of timestamps
+        save_gif: If True, save animation as GIF instead of showing
+        filename: Output filename for GIF
+    """
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -159,17 +177,18 @@ def animate_following(drone_positions, target_positions, times):
     ax.set_xlabel("X Position (m)", fontsize=12, fontweight="bold")
     ax.set_ylabel("Y Position (m)", fontsize=12, fontweight="bold")
     ax.set_title("Object Following: Drone Tracking Moving Target", fontsize=14, fontweight="bold")
-    ax.legend(fontsize=10)
+    ax.legend(fontsize=10, loc='upper left', framealpha=0.9)
     ax.grid(True, alpha=0.3)
     ax.axis("equal")
 
     info_text = ax.text(
-        0.02,
+        0.98,
         0.98,
         "",
         transform=ax.transAxes,
         fontsize=11,
         verticalalignment="top",
+        horizontalalignment="right",
         bbox=dict(boxstyle="round", facecolor="lightblue", alpha=0.8),
     )
 
@@ -215,11 +234,22 @@ def animate_following(drone_positions, target_positions, times):
     anim = FuncAnimation(fig, update, init_func=init, frames=num_frames, interval=50, blit=True, repeat=True)
 
     plt.tight_layout()
-    plt.show()
+    
+    if save_gif:
+        print(f"Saving animation to {filename}...")
+        anim.save(filename, writer='pillow', fps=20, dpi=80)
+        print(f"Animation saved successfully!")
+        plt.close(fig)
+    else:
+        plt.show()
 
     return anim
 
 
 if __name__ == "__main__":
-    # simulate_object_following()
-    simulate_complex_following()
+    # Run simulation and show animation
+    # simulate_complex_following()
+    
+    # Or save as GIF:
+    simulate_complex_following(save_gif=True, gif_filename="drone_following.gif")
+    # simulate_object_following(save_gif=True, gif_filename="simple_following.gif")
