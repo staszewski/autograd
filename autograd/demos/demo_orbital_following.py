@@ -6,8 +6,13 @@ from autograd.drone_problems.orbital_follower import OrbitalFollower
 from autograd.drone_problems.simple_drone import SimpleDrone
 
 
-def simulate_orbital_following_random_walk():
-    """Demo: Drone orbits target with completely unpredictable random walk motion"""
+def simulate_orbital_following_random_walk(save_gif=False, gif_filename="orbital_following.gif"):
+    """Demo: Drone orbits target with completely unpredictable random walk motion
+    
+    Args:
+        save_gif: If True, save animation as GIF
+        gif_filename: Output filename for GIF
+    """
 
     # Target starts at center, moves randomly
     target_x, target_y = 0, 0
@@ -82,11 +87,21 @@ def simulate_orbital_following_random_walk():
 
     print("-" * 50)
     print("Random walk simulation complete!")
-    animate_orbital_following(target_positions, drone_positions, times, orbit_radius, dt)
+    animate_orbital_following(target_positions, drone_positions, times, orbit_radius, dt, save_gif=save_gif, filename=gif_filename)
 
 
-def animate_orbital_following(target_positions, drone_positions, times, orbit_radius, dt):
-    """Create animated visualization of orbital following with random walk target"""
+def animate_orbital_following(target_positions, drone_positions, times, orbit_radius, dt, save_gif=False, filename="orbital_following.gif"):
+    """Create animated visualization of orbital following with random walk target
+    
+    Args:
+        target_positions: List of (x, y) target positions
+        drone_positions: List of (x, y) drone positions
+        times: List of timestamps
+        orbit_radius: Desired orbital radius
+        dt: Time step
+        save_gif: If True, save animation as GIF instead of showing
+        filename: Output filename for GIF
+    """
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -131,18 +146,19 @@ def animate_orbital_following(target_positions, drone_positions, times, orbit_ra
     ax.set_xlabel("X Position (m)", fontsize=12, fontweight="bold")
     ax.set_ylabel("Y Position (m)", fontsize=12, fontweight="bold")
     ax.set_title("Orbital Following: Random Walk Target", fontsize=14, fontweight="bold")
-    ax.legend(loc="upper left", fontsize=10)
+    ax.legend(loc="upper left", fontsize=10, framealpha=0.9)
     ax.grid(True, alpha=0.3)
     ax.axis("equal")
 
     # Info text with orbital metrics
     info_text = ax.text(
-        0.02,
+        0.98,
         0.98,
         "",
         transform=ax.transAxes,
         fontsize=11,
         verticalalignment="top",
+        horizontalalignment="right",
         bbox=dict(boxstyle="round", facecolor="lightblue", alpha=0.8),
     )
 
@@ -195,7 +211,14 @@ def animate_orbital_following(target_positions, drone_positions, times, orbit_ra
     anim = FuncAnimation(fig, update, init_func=init, frames=num_frames, interval=50, blit=True, repeat=True)
 
     plt.tight_layout()
-    plt.show()
+    
+    if save_gif:
+        print(f"Saving animation to {filename}...")
+        anim.save(filename, writer='pillow', fps=20, dpi=80)
+        print(f"Animation saved successfully!")
+        plt.close(fig)
+    else:
+        plt.show()
 
     return anim
 
@@ -208,7 +231,11 @@ if __name__ == "__main__":
     print("even as the target moves completely unpredictably!")
     print("=" * 60)
 
-    simulate_orbital_following_random_walk()
+    # Run simulation and save as GIF:
+    simulate_orbital_following_random_walk(save_gif=True, gif_filename="orbital_following.gif")
+    
+    # Or just show animation:
+    # simulate_orbital_following_random_walk()
 
     print("=" * 60)
     print("  DEMO COMPLETE!")
