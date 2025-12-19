@@ -1,7 +1,5 @@
-# TODO: RNN based on shakespear (from karpathy?)
 # https://codingowen.github.io/projects/recurrent_nn_from_scratch/ inspiration
 # https://cs.stanford.edu/people/karpathy/char-rnn/shakespear.txt
-# 0. imports
 from autograd.datasets.shakespeare_data import ShakespeareData
 from autograd.operations.log_softmax import LogSoftmaxOperation
 from autograd.operations.nll_loss import NLLLoss
@@ -10,8 +8,6 @@ from autograd.arithmetic import TanhOperation
 import numpy as np
 
 
-# 1. Data processing for text
-# 2. Define RNN
 class RNN:
     def __init__(self, input_size=2, hidden_size=128, output_size=2):
         self.input = Tensor(np.random.randn(input_size, hidden_size) * 0.1, requires_grad=True)
@@ -55,10 +51,6 @@ class RNN:
         return predictions
 
 
-# 3. forward
-# 4. loss computation
-# 5. training loop
-# 6. demo with text generation
 def compute_sequence_loss(predictions, target_string, data_processor):
     total_loss = 0
     for prediction, target_char in zip(predictions, target_string):
@@ -72,12 +64,42 @@ def compute_sequence_loss(predictions, target_string, data_processor):
     return avg_loss
 
 
+def generate_text(rnn, data_processor, seed_text="H", length=100, temperature=1.0):
+    hidden = Tensor(np.zeros((1, rnn.hidden_size)))
+    for char in seed_text:
+        onehot = data_processor.char_to_onehot(char)
+        onehot_tensor = Tensor(onehot)
+        hidden = rnn.step(onehot_tensor, hidden)
+
+    generated = seed_text
+    current_char = seed_text[-1]
+
+    for n in range(length):
+        onehot = data_processor.char_to_onehot(current_char)
+        onehot_tensor = Tensor(onehot)
+        hidden = rnn.step(onehot_tensor, hidden)
+        log_probs = rnn.predict_char_probs(hidden)
+
+        logits = log_probs.data[0]
+        scaled = logits / temperature
+        probs = np.exp(scaled - np.max(scaled))
+        probs = probs / np.sum(probs)
+
+        next_idx = np.random.choice(len(probs), p=probs)
+        next_char = data_processor.idx_to_char[next_idx]
+
+        generated += next_char
+        current_char = next_char
+
+    return generated
+
+
 def train_network(epochs=100, lr=0.01):
     dataset = ShakespeareData()
     nn = RNN(input_size=dataset.vocab_size, output_size=dataset.vocab_size)
     sequence_len = 5
     word_sequences = dataset.create_sequences(sequence_len)
-    word_sequences = word_sequences[:100]
+    word_sequences = word_sequences[:10000]
 
     for epoch in range(epochs):
         epoch_loss = 0
@@ -109,10 +131,13 @@ def train_network(epochs=100, lr=0.01):
             print(f"Epoch {epoch}/{epochs}, avg loss: {avg_loss:.4f}")
 
     print(f"Training complete. Final loss: {avg_loss:.4f}")
+    return nn, dataset
 
 
 def main():
-    train_network()
+    trained_nn, dataset = train_network()
+    print("Generated text:")
+    print(generate_text(trained_nn, dataset))
 
 
 if __name__ == "__main__":
