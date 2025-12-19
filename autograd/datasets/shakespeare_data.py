@@ -3,10 +3,8 @@ import numpy as np
 
 class ShakespeareData:
     def __init__(self):
-        # with open("autograd/datasets/shakespear.txt", "r") as f:
-        # self.text = f.read()
-
-        self.text = "Hello world"
+        with open("autograd/datasets/shakespear.txt", "r") as f:
+            self.text = f.read()
 
         self.chars = sorted(list(set(self.text)))
         self.vocab_size = len(self.chars)
@@ -20,7 +18,7 @@ class ShakespeareData:
 
         char_zeros[char_idx] = 1
 
-        return char_zeros
+        return char_zeros.reshape(1, self.vocab_size)
 
     def create_sequences(self, seq_length):
         text_length = len(self.text)
