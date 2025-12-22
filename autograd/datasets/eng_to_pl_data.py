@@ -10,6 +10,10 @@ class EnglishToPolishTranslationData:
             for row in reader:
                 eng = row[1]
                 pol = row[3]
+                if len(eng) < 5 or len(eng) > 12:  # Only short sentences
+                    continue
+                if len(pol) < 5 or len(pol) > 15:
+                    continue
                 self.pairs.append((eng.lower(), pol.lower()))
 
         self.build_vocabulary()
@@ -34,4 +38,3 @@ class EnglishToPolishTranslationData:
 
     def get_pairs(self):
         return self.pairs
-
