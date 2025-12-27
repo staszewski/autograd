@@ -1,8 +1,19 @@
 import numpy as np
 from typing import Optional, Set, Tuple
 
-from autograd.arithmetic import AddOperation, MatMulOperation, MulOperation, PowOperation, ReLUOperation, SigmoidOperation, SubOperation, DivOperation, TanhOperation
+from autograd.arithmetic import (
+    AddOperation,
+    MatMulOperation,
+    MulOperation,
+    PowOperation,
+    ReLUOperation,
+    SigmoidOperation,
+    SubOperation,
+    DivOperation,
+    TanhOperation,
+)
 from autograd.context import Context
+
 
 class Tensor:
     def __init__(self, data, requires_grad=False):
@@ -33,43 +44,45 @@ class Tensor:
     def backward(self, grad=None):
         """
         Compute gradients using backpropagation.
-        
+
         Args:
             grad: Optional gradient to start with. If None, uses ones_like(self._data)
         """
         if not self._requires_grad:
             raise RuntimeError("Gradient computation is not allowed for this tensor.")
-        
+
         if grad is None:
             grad = np.ones_like(self._data)
-        
+
         visited = set()
         self._backward_impl(grad, visited)
-    
+
     def _backward_impl(self, grad, visited):
         """
         Internal backward implementation with explicit visited tracking.
-        
+
         Args:
             grad: The gradient flowing into this tensor
             visited: Set of tensors already visited in this backward pass
         """
         self._grad += grad
-        
+
         if self in visited:
             return
         visited.add(self)
-        
+
         if self._grad_fn is not None:
             op_class, ctx = self._grad_fn
             grad_inputs = op_class.backward(ctx, self._grad)
-            
+
             for i, grad_input in enumerate(grad_inputs):
                 input_tensor = ctx.saved_tensors[i]
                 if input_tensor._requires_grad:
                     input_tensor._backward_impl(grad_input, visited)
+
     def max_pool2d(self, pool_size=2):
         from autograd.operations.max_pool_2d_operation import MaxPool2dOperation
+
         return MaxPool2dOperation.apply(self, pool_size)
 
     def relu(self):
@@ -80,20 +93,28 @@ class Tensor:
 
     def tanh(self):
         return TanhOperation.apply(self)
-    
+
     def softmax(self):
         from autograd.operations.softmax import SoftmaxOperation
+
         return SoftmaxOperation.apply(self)
 
     def log_softmax(self):
-        from autograd.operations.log_softmax import LogSoftmaxOperation 
+        from autograd.operations.log_softmax import LogSoftmaxOperation
+
         return LogSoftmaxOperation.apply(self)
-    
+
     def cross_entropy_with_logits(self, target, axis=0):
         from autograd.operations.log_softmax import LogSoftmaxOperation
         from autograd.operations.nll_loss import NLLLoss
+
         log_probs = LogSoftmaxOperation.apply(self, axis=axis)
         return NLLLoss.apply(log_probs, target, axis=axis)
+
+    def reshape(self, target_shape: Tuple):
+        from autograd.operations.shape_ops import ReshapeOperation
+
+        return ReshapeOperation.apply(_ensure_tensor(self), target_shape)
 
     def __neg__(self):
         return self * -1
@@ -134,8 +155,10 @@ class Tensor:
     def __rpow__(self, other):
         return PowOperation.apply(_ensure_tensor(other), self)
 
+
 def _ensure_tensor(value):
     """Ensure value is a Tensor."""
     if isinstance(value, Tensor):
         return value
     return Tensor(value)
+
